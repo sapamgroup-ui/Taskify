@@ -121,10 +121,10 @@ app.use('/api/subscriptions', require('./routes/subscriptions'));
 app.use('/api/verification', require('./routes/verification'));
 app.use('/api/admin', require('./routes/admin'));
 
-const { uploadAvatar, uploadTaskPhotos } = require('./middleware/upload');
+const { upload } = require('./middleware/upload');
 const { auth } = require('./middleware/auth');
 
-app.post('/api/upload', auth, uploadAvatar.single('file'), (req, res) => {
+app.post('/api/upload', auth, upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
