@@ -5,6 +5,8 @@ import axios from 'axios'
 import CategoryGrid from '../components/CategoryGrid'
 import TaskCard from '../components/TaskCard'
 import SwipeCards from '../components/SwipeCards'
+import SEO from '../components/SEO'
+import { trackPageView } from '../hooks/useAnalytics'
 
 const popularSearches = [
   'House Cleaning', 'Plumbing', 'Delivery', 'Photography', 'Web Development', 'Painting', 'Moving', 'Tutoring'
@@ -55,7 +57,7 @@ export default function LandingPage() {
     } catch { if (!append) setLatestTasks([]); setHasMore(false) } finally { setLoadingLatest(false) }
   }, [])
 
-  useEffect(() => { fetchLatest(1) }, [fetchLatest])
+  useEffect(() => { fetchLatest(1); trackPageView('home') }, [fetchLatest])
 
   useEffect(() => {
     if (!hasMore || loadingLatest) return
@@ -74,6 +76,10 @@ export default function LandingPage() {
 
   return (
     <div>
+      <SEO
+        title="India's #1 Local Task Marketplace"
+        description="Find trusted local Taskers for any job — cleaning, plumbing, delivery, web development and more. Set your price, pick your Tasker, get it done."
+      />
       {/* Hero Section — Upwork-inspired with animated background */}
       <section className="relative bg-gradient-to-br from-gray-900 via-primary-900 to-gray-900 text-white overflow-hidden min-h-[520px] flex items-center">
         <div className="absolute inset-0">
@@ -352,17 +358,17 @@ export default function LandingPage() {
                   desc: 'For active Taskers and posters',
                   features: ['7 posts per month', '7 replies per month', 'Priority support', 'Premium profile badge', 'Higher search ranking', 'Early access to features'],
                   cta: 'Choose Basic',
-                  popular: true,
+                  popular: false,
                   color: 'border-primary-500',
                 },
                 {
                   name: 'Premium',
                   price: '₹500',
                   period: '/month',
-                  desc: 'Unlimited everything',
-                  features: ['Unlimited posts', 'Unlimited replies', 'Priority support', 'Premium profile badge', 'Highest search ranking', 'Early access to features', 'Dedicated account manager'],
+                  desc: 'Unlimited everything + Verified',
+                  features: ['50 posts per month', '50 replies per month', 'Verified Tasker badge', 'Premium profile badge', 'Priority support', 'Highest search ranking', 'Early access to features', 'Dedicated account manager'],
                   cta: 'Subscribe Premium',
-                  popular: false,
+                  popular: true,
                   color: 'border-accent-500',
                 },
               ].map(plan => (

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /messages
+
+Sitemap: https://taskify-uum5.vercel.app/sitemap.xml

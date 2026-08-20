@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Wrench, Truck, Trees, Paintbrush, Droplets, Zap, Camera, Globe, Code, BookOpen, Home, Briefcase, Hammer, Heart, CalendarDays, Utensils, Dog, Car, Shirt, Baby, Music, ShieldCheck, Scissors, Sofa } from 'lucide-react'
+import { trackCategoryClick } from '../hooks/useAnalytics'
 
 const categories = [
   { name: 'Cleaning', icon: Home, color: 'bg-blue-50 text-blue-600 hover:bg-blue-100' },
@@ -37,6 +38,7 @@ export default function CategoryGrid({ compact = false }) {
           <Link
             key={cat.name}
             to={`/category/${cat.name}`}
+            onClick={() => trackCategoryClick(cat.name)}
             className={`flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl ${cat.color} transition-all duration-200 hover:scale-105 hover:shadow-md`}
           >
             <Icon size={20} className="mb-1 sm:mb-1.5" />

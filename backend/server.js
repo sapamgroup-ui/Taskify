@@ -120,6 +120,7 @@ app.use('/api', require('./routes/comments'));
 app.use('/api/subscriptions', require('./routes/subscriptions'));
 app.use('/api/verification', require('./routes/verification'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/analytics', require('./routes/analytics'));
 
 const { upload } = require('./middleware/upload');
 const { auth } = require('./middleware/auth');

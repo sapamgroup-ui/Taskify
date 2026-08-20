@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import Ticker from './components/Ticker'
 import Footer from './components/Footer'
 import MobileFooter from './components/MobileFooter'
 import InstallBanner from './components/InstallBanner'
@@ -38,6 +39,7 @@ function AppContent() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
+      <Ticker />
       <main className="flex-1 pb-16 md:pb-0">
         <Routes>
           <Route path="/" element={<LandingPage />} />

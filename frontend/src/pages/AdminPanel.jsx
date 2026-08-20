@@ -3,8 +3,9 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import { Users, ListTodo, TrendingUp, Search, Shield, Ban, CheckCircle, XCircle, Eye, Loader2, BarChart3, AlertTriangle, CreditCard, BadgeCheck, ChevronDown } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import AdminAnalytics from '../components/AdminAnalytics'
 
-const adminTabs = ['overview', 'users', 'tasks', 'reports', 'subscriptions', 'verifications', 'revenue']
+const adminTabs = ['overview', 'users', 'tasks', 'reports', 'subscriptions', 'verifications', 'analytics']
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -398,45 +399,8 @@ export default function AdminPanel() {
               </div>
             )}
 
-            {activeTab === 'revenue' && (
-              <div className="space-y-6">
-                <h2 className="text-lg font-bold text-gray-900">Revenue Analytics</h2>
-                <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-white">
-                  <p className="text-blue-100 text-sm">Total Revenue</p>
-                  <p className="text-4xl font-extrabold mt-1">₹{stats.totalRevenue || 0}</p>
-                  <div className="grid grid-cols-3 gap-4 mt-6">
-                    <div className="bg-white/10 rounded-xl p-4">
-                      <p className="text-blue-100 text-xs">Completed Tasks</p>
-                      <p className="text-xl font-bold">{stats.completedTasks || 0}</p>
-                    </div>
-                    <div className="bg-white/10 rounded-xl p-4">
-                      <p className="text-blue-100 text-xs">Avg per Task</p>
-                      <p className="text-xl font-bold">₹{stats.totalTasks ? Math.floor((stats.totalRevenue || 0) / stats.totalTasks) : 0}</p>
-                    </div>
-                    <div className="bg-white/10 rounded-xl p-4">
-                      <p className="text-blue-100 text-xs">Platform Fee</p>
-                      <p className="text-xl font-bold">10%</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-100 p-6">
-                  <h3 className="font-bold text-gray-900 mb-3">Revenue by Category</h3>
-                  <div className="space-y-3">
-                    {['Cleaning', 'Handyman', 'Delivery', 'Web Dev', 'Design'].map((cat) => {
-                      const catTasks = tasks.filter((t) => t.category === cat)
-                      const rev = catTasks.reduce((sum, t) => sum + ((Number(t.budget_min) || 0) + (Number(t.budget_max) || 0)) / 2 * 0.1, 0)
-                      const pct = stats.totalRevenue ? (rev / stats.totalRevenue) * 100 : 0
-                      return (
-                        <div key={cat} className="flex items-center gap-3">
-                          <span className="w-24 text-sm text-gray-600 font-medium">{cat}</span>
-                          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-primary-500 rounded-full" style={{ width: `${Math.min(pct, 100)}%` }}></div></div>
-                          <span className="w-16 text-right text-sm text-gray-500">₹{Math.floor(rev)}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
+            {activeTab === 'analytics' && (
+              <AdminAnalytics />
             )}
           </>
         )}
