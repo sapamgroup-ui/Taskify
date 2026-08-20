@@ -140,12 +140,27 @@ router.get('/category/:category', auth, (req, res) => {
 router.get('/ticker', (req, res) => {
   try {
     const config = readJSON(TICKER_FILE, {
+      enabled: false,
       items: [],
       bgColor: '#1a1a2e',
-      textColor: '#e94560',
+      textColor: '#ffffff',
       fontSize: '14px',
-      fontFamily: 'Arial, sans-serif',
-      speed: 'normal'
+      fontFamily: 'Inter, system-ui, sans-serif',
+      speed: 'normal',
+      direction: 'rtl',
+      gap: 30,
+      seamlessLoop: true,
+      showDividers: true,
+      dividerStyle: '|',
+      pauseOnHover: false,
+      textShadow: false,
+      borderColor: '',
+      borderWidth: 0,
+      borderRadius: 0,
+      padding: 'medium',
+      label: 'NOW BUZZING',
+      labelBg: '#e94560',
+      labelColor: '#ffffff'
     });
 
     res.json({ success: true, data: config });
@@ -157,15 +172,43 @@ router.get('/ticker', (req, res) => {
 // PUT /api/analytics/ticker - Update ticker config (admin only)
 router.put('/ticker', adminAuth, (req, res) => {
   try {
-    const { items, bgColor, textColor, fontSize, fontFamily, speed } = req.body;
-
     const config = {
-      items: Array.isArray(items) ? items : [],
-      bgColor: bgColor || '#1a1a2e',
-      textColor: textColor || '#e94560',
-      fontSize: fontSize || '14px',
-      fontFamily: fontFamily || 'Arial, sans-serif',
-      speed: speed || 'normal'
+      enabled: req.body.enabled !== undefined ? req.body.enabled : false,
+      items: Array.isArray(req.body.items) ? req.body.items.map(item => ({
+        id: item.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        html: item.html || item.text || '',
+        text: item.text || '',
+        bgColor: item.bgColor || '',
+        textColor: item.textColor || '',
+        fontWeight: item.fontWeight || 'normal',
+        fontStyle: item.fontStyle || 'normal',
+        textDecoration: item.textDecoration || 'none',
+        fontSize: item.fontSize || '',
+        fontFamily: item.fontFamily || '',
+        padding: item.padding || '',
+        borderRadius: item.borderRadius || '',
+        borderColor: item.borderColor || '',
+        borderWidth: item.borderWidth || 0
+      })) : [],
+      bgColor: req.body.bgColor || '#1a1a2e',
+      textColor: req.body.textColor || '#ffffff',
+      fontSize: req.body.fontSize || '14px',
+      fontFamily: req.body.fontFamily || 'Inter, system-ui, sans-serif',
+      speed: req.body.speed || 'normal',
+      direction: req.body.direction || 'rtl',
+      gap: req.body.gap !== undefined ? req.body.gap : 30,
+      seamlessLoop: req.body.seamlessLoop !== undefined ? req.body.seamlessLoop : true,
+      showDividers: req.body.showDividers !== undefined ? req.body.showDividers : true,
+      dividerStyle: req.body.dividerStyle || '|',
+      pauseOnHover: req.body.pauseOnHover !== undefined ? req.body.pauseOnHover : false,
+      textShadow: req.body.textShadow !== undefined ? req.body.textShadow : false,
+      borderColor: req.body.borderColor || '',
+      borderWidth: req.body.borderWidth || 0,
+      borderRadius: req.body.borderRadius || 0,
+      padding: req.body.padding || 'medium',
+      label: req.body.label || 'NOW BUZZING',
+      labelBg: req.body.labelBg || '#e94560',
+      labelColor: req.body.labelColor || '#ffffff'
     };
 
     writeJSON(TICKER_FILE, config);
