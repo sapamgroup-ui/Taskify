@@ -2,6 +2,8 @@ import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import MobileFooter from './components/MobileFooter'
+import InstallBanner from './components/InstallBanner'
+import useBackHandler from './hooks/useBackHandler'
 import LandingPage from './pages/LandingPage'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -18,7 +20,21 @@ import Premium from './pages/Premium'
 import VerifyTasker from './pages/VerifyTasker'
 import ProtectedRoute from './components/ProtectedRoute'
 
-function App() {
+function NotFound() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-6xl font-extrabold text-gray-200">404</h1>
+        <p className="text-gray-500 mt-2">Page not found</p>
+        <a href="/" className="inline-block mt-4 bg-primary-500 text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-primary-600 transition-all">Go Home</a>
+      </div>
+    </div>
+  )
+}
+
+function AppContent() {
+  useBackHandler()
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
@@ -38,12 +54,18 @@ function App() {
           <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
           <Route path="/premium" element={<Premium />} />
           <Route path="/verify" element={<ProtectedRoute><VerifyTasker /></ProtectedRoute>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />
       <MobileFooter />
+      <InstallBanner />
     </div>
   )
+}
+
+function App() {
+  return <AppContent />
 }
 
 export default App

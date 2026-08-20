@@ -55,11 +55,13 @@ const createTask = async (req, res) => {
       .limit(1)
       .maybeSingle();
 
-    const postsLimit = subData ? (subData.posts_limit === -1 ? Infinity : subData.posts_limit) : 2;
-    const postsUsed = subData ? (subData.posts_used || 0) : 0;
+    if (req.user.role !== 'admin') {
+      const postsLimit = subData ? (subData.posts_limit === -1 ? Infinity : subData.posts_limit) : 2;
+      const postsUsed = subData ? (subData.posts_used || 0) : 0;
 
-    if (postsUsed >= postsLimit) {
-      return res.status(403).json({ success: false, message: 'Free plan: 2 posts/month. Upgrade for more.' });
+      if (postsUsed >= postsLimit) {
+        return res.status(403).json({ success: false, message: 'Free plan: 2 posts/month. Upgrade for more.' });
+      }
     }
 
     if (req.files && req.files.length > 0) {

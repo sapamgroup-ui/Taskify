@@ -1,34 +1,40 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
-import { Users, ListTodo, TrendingUp, Search, Shield, Ban, CheckCircle, XCircle, Eye, Loader2, BarChart3, AlertTriangle } from 'lucide-react'
+import { Users, ListTodo, TrendingUp, Search, Shield, Ban, CheckCircle, XCircle, Eye, Loader2, BarChart3, AlertTriangle, CreditCard, BadgeCheck, ChevronDown } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
-const adminTabs = ['overview', 'users', 'tasks', 'reports', 'revenue']
+const adminTabs = ['overview', 'users', 'tasks', 'reports', 'subscriptions', 'verifications', 'revenue']
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('overview')
   const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState({ totalUsers: 0, totalTasks: 0, totalRevenue: 0, activeTasks: 0 })
+  const [stats, setStats] = useState({ totalUsers: 0, totalTasks: 0, totalRevenue: 0, activeTasks: 0, completedTasks: 0 })
   const [users, setUsers] = useState([])
   const [tasks, setTasks] = useState([])
   const [reports, setReports] = useState([])
+  const [subscriptions, setSubscriptions] = useState([])
+  const [verifications, setVerifications] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [taskFilter, setTaskFilter] = useState('')
 
   const fetchAdminData = async () => {
     try {
       setLoading(true)
-      const [statsRes, usersRes, tasksRes, reportsRes] = await Promise.allSettled([
+      const [statsRes, usersRes, tasksRes, reportsRes, subsRes, verRes] = await Promise.allSettled([
         axios.get('/api/admin/stats'),
         axios.get('/api/admin/users'),
         axios.get('/api/admin/tasks'),
         axios.get('/api/admin/reports'),
+        axios.get('/api/admin/subscriptions'),
+        axios.get('/api/admin/verifications'),
       ])
       if (statsRes.status === 'fulfilled') setStats(statsRes.value.data)
       if (usersRes.status === 'fulfilled') setUsers(usersRes.value.data.users || [])
       if (tasksRes.status === 'fulfilled') setTasks(tasksRes.value.data.tasks || [])
       if (reportsRes.status === 'fulfilled') setReports(reportsRes.value.data.reports || [])
+      if (subsRes.status === 'fulfilled') setSubscriptions(subsRes.value.data.subscriptions || [])
+      if (verRes.status === 'fulfilled') setVerifications(verRes.value.data.requests || [])
     } catch {
       toast.error('Failed to load admin data')
     } finally {
@@ -43,7 +49,7 @@ export default function AdminPanel() {
       await axios.put(`/api/admin/users/${userId}/${blocked ? 'unblock' : 'block'}`)
       setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, blocked: !blocked } : u))
       toast.success(`User ${blocked ? 'unblocked' : 'blocked'}`)
-    } catch (err) {
+    } catch {
       toast.error('Failed to update user')
     }
   }
@@ -53,8 +59,28 @@ export default function AdminPanel() {
       await axios.put(`/api/admin/reports/${reportId}`, { status: action })
       setReports((prev) => prev.filter((r) => r.id !== reportId))
       toast.success(`Report ${action}`)
-    } catch (err) {
+    } catch {
       toast.error('Failed to update report')
+    }
+  }
+
+  const assignPlan = async (userId, plan) => {
+    try {
+      await axios.put(`/api/admin/users/${userId}/subscription`, { plan })
+      toast.success(`Plan updated to ${plan}`)
+      fetchAdminData()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update plan')
+    }
+  }
+
+  const reviewVerification = async (requestId, status) => {
+    try {
+      await axios.put(`/api/admin/verifications/${requestId}`, { status, adminNotes: status === 'approved' ? 'Approved by admin' : '' })
+      setVerifications((prev) => prev.filter((v) => v.id !== requestId))
+      toast.success(`Verification ${status}`)
+    } catch {
+      toast.error('Failed to update verification')
     }
   }
 
@@ -69,7 +95,7 @@ export default function AdminPanel() {
     { label: 'Total Users', value: stats.totalUsers || users.length, icon: Users, color: 'text-primary-500', bg: 'bg-primary-50' },
     { label: 'Total Tasks', value: stats.totalTasks || tasks.length, icon: ListTodo, color: 'text-accent-500', bg: 'bg-accent-50' },
     { label: 'Revenue', value: `₹${stats.totalRevenue || 0}`, icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-50' },
-    { label: 'Active Tasks', value: stats.activeTasks || tasks.filter((t) => t.status === 'in_progress').length, icon: TrendingUp, color: 'text-yellow-500', bg: 'bg-yellow-50' },
+    { label: 'Active Tasks', value: stats.activeTasks || tasks.filter((t) => t.status === 'open').length, icon: TrendingUp, color: 'text-yellow-500', bg: 'bg-yellow-50' },
   ]
 
   return (
@@ -82,7 +108,7 @@ export default function AdminPanel() {
 
         <div className="flex gap-1 bg-white rounded-xl border border-gray-100 p-1 mb-6 overflow-x-auto">
           {adminTabs.map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all capitalize whitespace-nowrap ${activeTab === tab ? 'bg-primary-500 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
+            <button key={tab} onClick={() => { setActiveTab(tab); setSearchQuery('') }} className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all capitalize whitespace-nowrap ${activeTab === tab ? 'bg-primary-500 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
               {tab}
             </button>
           ))}
@@ -153,6 +179,7 @@ export default function AdminPanel() {
                           <th className="text-left px-5 py-3 font-semibold text-gray-600">Role</th>
                           <th className="text-left px-5 py-3 font-semibold text-gray-600">Status</th>
                           <th className="text-left px-5 py-3 font-semibold text-gray-600">Joined</th>
+                          <th className="text-left px-5 py-3 font-semibold text-gray-600">Plan</th>
                           <th className="text-right px-5 py-3 font-semibold text-gray-600">Actions</th>
                         </tr>
                       </thead>
@@ -168,7 +195,19 @@ export default function AdminPanel() {
                             <td className="px-5 py-3 text-gray-500">{u.email}</td>
                             <td className="px-5 py-3"><span className="bg-gray-100 text-gray-600 text-xs font-medium px-2 py-1 rounded-full capitalize">{u.role}</span></td>
                             <td className="px-5 py-3"><span className={`text-xs font-medium px-2 py-1 rounded-full ${u.blocked ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>{u.blocked ? 'Blocked' : 'Active'}</span></td>
-                            <td className="px-5 py-3 text-gray-400 text-xs">{u.createdAt ? formatDistanceToNow(new Date(u.createdAt), { addSuffix: true }) : ''}</td>
+                            <td className="px-5 py-3 text-gray-400 text-xs">{u.created_at ? formatDistanceToNow(new Date(u.created_at), { addSuffix: true }) : ''}</td>
+                            <td className="px-5 py-3">
+                              <div className="relative group">
+                                <button className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-primary-50 text-primary-600 hover:bg-primary-100 transition-all">
+                                  {subscriptions.find(s => s.user_id === u.id)?.plan || 'free'} <ChevronDown size={12} />
+                                </button>
+                                <div className="hidden group-hover:block absolute z-10 top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-32">
+                                  {['free', 'per_reply', 'basic', 'premium'].map((plan) => (
+                                    <button key={plan} onClick={() => assignPlan(u.id, plan)} className="block w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 capitalize">{plan.replace('_', ' ')}</button>
+                                  ))}
+                                </div>
+                              </div>
+                            </td>
                             <td className="px-5 py-3 text-right">
                               <button onClick={() => toggleBlockUser(u.id, u.blocked)} className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${u.blocked ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}>
                                 {u.blocked ? 'Unblock' : 'Block'}
@@ -210,7 +249,6 @@ export default function AdminPanel() {
                           <th className="text-left px-5 py-3 font-semibold text-gray-600">Category</th>
                           <th className="text-left px-5 py-3 font-semibold text-gray-600">Budget</th>
                           <th className="text-left px-5 py-3 font-semibold text-gray-600">Status</th>
-                          <th className="text-left px-5 py-3 font-semibold text-gray-600">Offers</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
@@ -219,13 +257,12 @@ export default function AdminPanel() {
                             <td className="px-5 py-3 font-medium text-gray-900 max-w-[200px] truncate">{t.title}</td>
                             <td className="px-5 py-3 text-gray-500">{t.poster?.name || 'Unknown'}</td>
                             <td className="px-5 py-3"><span className="bg-accent-50 text-accent-600 text-xs font-medium px-2 py-1 rounded-full">{t.category}</span></td>
-                            <td className="px-5 py-3 text-gray-700 font-medium">₹{t.budget?.min}-₹{t.budget?.max}</td>
+                            <td className="px-5 py-3 text-gray-700 font-medium">₹{t.budget_min}-{t.budget_max}</td>
                             <td className="px-5 py-3">
                               <span className={`text-xs font-medium px-2 py-1 rounded-full ${t.status === 'open' ? 'bg-green-100 text-green-600' : t.status === 'completed' ? 'bg-gray-100 text-gray-600' : 'bg-blue-100 text-blue-600'}`}>
                                 {t.status?.replace('_', ' ')}
                               </span>
                             </td>
-                            <td className="px-5 py-3 text-gray-500">{t.offers?.length || 0}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -248,10 +285,10 @@ export default function AdminPanel() {
                           <span className="font-semibold text-gray-900 text-sm">{r.reason || 'No reason specified'}</span>
                           <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{r.type}</span>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">{r.description || r.additionalInfo || 'No additional details'}</p>
+                        <p className="text-sm text-gray-600 mb-2">{r.description || r.additional_info || 'No additional details'}</p>
                         <div className="flex items-center gap-4 text-xs text-gray-400">
                           <span>Reported by: <span className="text-gray-600">{r.reporter?.name || 'Anonymous'}</span></span>
-                          <span>{r.createdAt ? formatDistanceToNow(new Date(r.createdAt), { addSuffix: true }) : ''}</span>
+                          <span>{r.created_at ? formatDistanceToNow(new Date(r.created_at), { addSuffix: true }) : ''}</span>
                         </div>
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
@@ -273,6 +310,94 @@ export default function AdminPanel() {
               </div>
             )}
 
+            {activeTab === 'subscriptions' && (
+              <div className="space-y-4">
+                <h2 className="text-lg font-bold text-gray-900">Subscriptions</h2>
+                <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="text-left px-5 py-3 font-semibold text-gray-600">User</th>
+                          <th className="text-left px-5 py-3 font-semibold text-gray-600">Plan</th>
+                          <th className="text-left px-5 py-3 font-semibold text-gray-600">Posts</th>
+                          <th className="text-left px-5 py-3 font-semibold text-gray-600">Replies</th>
+                          <th className="text-left px-5 py-3 font-semibold text-gray-600">Status</th>
+                          <th className="text-left px-5 py-3 font-semibold text-gray-600">Started</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {subscriptions.map((s) => (
+                          <tr key={s.id} className="hover:bg-gray-50 transition-all">
+                            <td className="px-5 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center"><span className="text-xs font-bold text-primary-600">{s.user?.name?.charAt(0) || '?'}</span></div>
+                                <div>
+                                  <p className="font-medium text-gray-900">{s.user?.name || 'Unknown'}</p>
+                                  <p className="text-xs text-gray-400">{s.user?.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-5 py-3"><span className="bg-primary-50 text-primary-600 text-xs font-bold px-2 py-1 rounded-full capitalize">{s.plan?.replace('_', ' ')}</span></td>
+                            <td className="px-5 py-3 text-gray-500">{s.posts_used}/{s.posts_limit === -1 ? '∞' : s.posts_limit}</td>
+                            <td className="px-5 py-3 text-gray-500">{s.replies_used}/{s.replies_limit === -1 ? '∞' : s.replies_limit}</td>
+                            <td className="px-5 py-3"><span className={`text-xs font-medium px-2 py-1 rounded-full ${s.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}>{s.status}</span></td>
+                            <td className="px-5 py-3 text-gray-400 text-xs">{s.start_date ? formatDistanceToNow(new Date(s.start_date), { addSuffix: true }) : ''}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {subscriptions.length === 0 && <p className="text-gray-500 text-sm text-center py-8">No subscriptions found</p>}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'verifications' && (
+              <div className="space-y-4">
+                <h2 className="text-lg font-bold text-gray-900">Pending Verifications ({verifications.length})</h2>
+                {verifications.length > 0 ? verifications.map((v) => (
+                  <div key={v.id} className="bg-white rounded-xl border border-gray-100 p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-bold text-primary-600">{v.user?.name?.charAt(0) || '?'}</span>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{v.user?.name || 'Unknown'}</p>
+                            <p className="text-xs text-gray-400">{v.user?.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-4 text-xs text-gray-500">
+                          <span>Submitted: {v.created_at ? formatDistanceToNow(new Date(v.created_at), { addSuffix: true }) : ''}</span>
+                        </div>
+                        {v.doc1_url && (
+                          <div className="mt-3 flex gap-2">
+                            <a href={v.doc1_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary-500 hover:text-primary-600 font-medium"><Eye size={12} /> Doc 1</a>
+                            {v.doc2_url && <a href={v.doc2_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary-500 hover:text-primary-600 font-medium"><Eye size={12} /> Doc 2</a>}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button onClick={() => reviewVerification(v.id, 'approved')} className="flex items-center gap-1 bg-green-100 text-green-600 hover:bg-green-200 text-xs font-medium px-3 py-2 rounded-lg transition-all">
+                          <BadgeCheck size={14} /> Approve
+                        </button>
+                        <button onClick={() => reviewVerification(v.id, 'rejected')} className="flex items-center gap-1 bg-red-100 text-red-600 hover:bg-red-200 text-xs font-medium px-3 py-2 rounded-lg transition-all">
+                          <XCircle size={14} /> Reject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
+                    <BadgeCheck size={40} className="mx-auto text-green-400 mb-3" />
+                    <p className="text-gray-500">No pending verification requests</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === 'revenue' && (
               <div className="space-y-6">
                 <h2 className="text-lg font-bold text-gray-900">Revenue Analytics</h2>
@@ -281,8 +406,8 @@ export default function AdminPanel() {
                   <p className="text-4xl font-extrabold mt-1">₹{stats.totalRevenue || 0}</p>
                   <div className="grid grid-cols-3 gap-4 mt-6">
                     <div className="bg-white/10 rounded-xl p-4">
-                      <p className="text-blue-100 text-xs">This Month</p>
-                      <p className="text-xl font-bold">₹{Math.floor((stats.totalRevenue || 0) * 0.3)}</p>
+                      <p className="text-blue-100 text-xs">Completed Tasks</p>
+                      <p className="text-xl font-bold">{stats.completedTasks || 0}</p>
                     </div>
                     <div className="bg-white/10 rounded-xl p-4">
                       <p className="text-blue-100 text-xs">Avg per Task</p>
@@ -299,7 +424,7 @@ export default function AdminPanel() {
                   <div className="space-y-3">
                     {['Cleaning', 'Handyman', 'Delivery', 'Web Dev', 'Design'].map((cat) => {
                       const catTasks = tasks.filter((t) => t.category === cat)
-                      const rev = catTasks.reduce((sum, t) => sum + ((t.budget?.min || 0) + (t.budget?.max || 0)) / 2 * 0.1, 0)
+                      const rev = catTasks.reduce((sum, t) => sum + ((Number(t.budget_min) || 0) + (Number(t.budget_max) || 0)) / 2 * 0.1, 0)
                       const pct = stats.totalRevenue ? (rev / stats.totalRevenue) * 100 : 0
                       return (
                         <div key={cat} className="flex items-center gap-3">

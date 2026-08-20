@@ -45,10 +45,12 @@ const addComment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Comment content is required' });
     }
 
-    const { allowed, subscription } = await checkAndUseReply(userId);
+    if (req.user.role !== 'admin') {
+      const { allowed, subscription } = await checkAndUseReply(userId);
 
-    if (!allowed) {
-      return res.status(403).json({ success: false, message: 'Free plan: 1 reply/month. Upgrade for more.' });
+      if (!allowed) {
+        return res.status(403).json({ success: false, message: 'Free plan: 1 reply/month. Upgrade for more.' });
+      }
     }
 
     const { data: comment, error } = await supabase

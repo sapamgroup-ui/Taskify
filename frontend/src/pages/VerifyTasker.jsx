@@ -17,9 +17,15 @@ export default function VerifyTasker() {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await axios.get('/api/verification/status')
-        setStatus(res.data.status || 'none')
-        setVerification(res.data.verification || null)
+        const res = await axios.get('/api/verification/me')
+        const profile = res.data.profile || {}
+        setStatus(profile.verification_status || 'none')
+        setVerification({
+          verifiedAt: profile.verified_at,
+          rejectionReason: profile.verification_notes,
+          doc1: profile.verification_doc1,
+          doc2: profile.verification_doc2
+        })
       } catch {
         setStatus('none')
       } finally {
@@ -29,6 +35,15 @@ export default function VerifyTasker() {
     fetchStatus()
   }, [])
 
+  const uploadFile = async (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await axios.post('/api/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return res.data.url
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!doc1 || !doc2) {
@@ -37,12 +52,8 @@ export default function VerifyTasker() {
     }
     setSubmitting(true)
     try {
-      const formData = new FormData()
-      formData.append('document1', doc1)
-      formData.append('document2', doc2)
-      await axios.post('/api/verification/request', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      const [doc1Url, doc2Url] = await Promise.all([uploadFile(doc1), uploadFile(doc2)])
+      await axios.post('/api/verification/request', { doc1Url, doc2Url })
       toast.success('Verification request submitted!')
       setStatus('pending')
     } catch (err) {

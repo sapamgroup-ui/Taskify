@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html><head><title>Generate Taskify Icons</title></head>
+<body>
+<h1>Open console (F12) to generate icons. Right-click each image and Save As.</h1>
+<div id="icons"></div>
+<script>
+const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+const container = document.getElementById('icons');
+sizes.forEach(size => {
+  const c = document.createElement('canvas');
+  c.width = size;
+  c.height = size;
+  const ctx = c.getContext('2d');
+  const r = size * 0.18;
+  ctx.beginPath();
+  ctx.roundRect(0, 0, size, size, r);
+  ctx.fillStyle = '#FF6B35';
+  ctx.fill();
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold ' + (size * 0.55) + 'px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('T', size / 2, size / 2 + size * 0.03);
+  const div = document.createElement('div');
+  div.style.cssText = 'display:inline-block;margin:10px;text-align:center';
+  div.innerHTML = '<p>' + size + 'x' + size + '</p>';
+  div.appendChild(c);
+  container.appendChild(div);
+});
+</script>
+</body></html>

@@ -12,7 +12,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'https://taskify-uum5.vercel.app'],
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'https://taskify-uum5.vercel.app', 'https://taskify-uum5.vercel.app'],
     methods: ['GET', 'POST']
   }
 });
@@ -23,7 +23,14 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(morgan('dev'));
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'https://taskify-uum5.vercel.app'],
+  origin: function(origin, callback) {
+    const allowed = ['http://localhost:5173', 'http://localhost:3000', 'https://taskify-uum5.vercel.app'];
+    if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -112,8 +119,19 @@ app.use('/api/payments', require('./routes/payments'));
 app.use('/api', require('./routes/comments'));
 app.use('/api/subscriptions', require('./routes/subscriptions'));
 app.use('/api/verification', require('./routes/verification'));
+app.use('/api/admin', require('./routes/admin'));
 
+const { uploadAvatar, uploadTaskPhotos } = require('./middleware/upload');
 const { auth } = require('./middleware/auth');
+
+app.post('/api/upload', auth, uploadAvatar.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded' });
+  }
+  const filePath = `/uploads/${req.file.filename}`;
+  res.json({ success: true, url: filePath });
+});
+
 const { getDashboard } = require('./controllers/dashboardController');
 app.get('/api/dashboard', auth, getDashboard);
 

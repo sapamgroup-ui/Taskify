@@ -18,7 +18,7 @@ function Comment({ comment, taskId, onReply, depth = 0 }) {
     if (!replyText.trim()) return
     setSubmitting(true)
     try {
-      await onReply(replyText, comment._id || comment.id)
+      await onReply(replyText, comment.id)
       setReplyText('')
       setShowReplyInput(false)
     } catch {
@@ -32,19 +32,19 @@ function Comment({ comment, taskId, onReply, depth = 0 }) {
       <div className="flex gap-3 py-3">
         <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
           <span className="text-xs font-semibold text-primary-600">
-            {comment.user?.name?.charAt(0) || comment.author?.name?.charAt(0) || 'U'}
+            {comment.profiles?.name?.charAt(0) || comment.user?.name?.charAt(0) || comment.author?.name?.charAt(0) || 'U'}
           </span>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-gray-900">
-              {comment.user?.name || comment.author?.name || 'Anonymous'}
+              {comment.profiles?.name || comment.user?.name || comment.author?.name || 'Anonymous'}
             </span>
             <span className="text-xs text-gray-400">
-              {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true }) : ''}
+              {comment.created_at ? formatDistanceToNow(new Date(comment.created_at), { addSuffix: true }) : comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true }) : ''}
             </span>
           </div>
-          <p className="text-sm text-gray-700 mt-0.5 whitespace-pre-line">{comment.text || comment.content}</p>
+          <p className="text-sm text-gray-700 mt-0.5 whitespace-pre-line">{comment.content || comment.text}</p>
           {user && depth < 2 && (
             <button
               onClick={() => setShowReplyInput(!showReplyInput)}
@@ -89,7 +89,7 @@ function Comment({ comment, taskId, onReply, depth = 0 }) {
             <div className="space-y-0">
               {comment.replies.map((reply) => (
                 <Comment
-                  key={reply._id || reply.id}
+                  key={reply.id}
                   comment={reply}
                   taskId={taskId}
                   onReply={onReply}
@@ -137,7 +137,7 @@ export default function CommentSection({ taskId, onCommentCount }) {
     if (!newComment.trim()) return
     setSubmitting(true)
     try {
-      await axios.post(`/api/tasks/${taskId}/comments`, { text: newComment })
+      await axios.post(`/api/tasks/${taskId}/comments`, { content: newComment })
       setNewComment('')
       fetchComments()
     } catch (err) {
@@ -152,7 +152,7 @@ export default function CommentSection({ taskId, onCommentCount }) {
   }
 
   const handleReply = async (text, parentCommentId) => {
-    await axios.post(`/api/tasks/${taskId}/comments`, { text, parentCommentId })
+    await axios.post(`/api/tasks/${taskId}/comments`, { content: text, parentId: parentCommentId })
     fetchComments()
   }
 
@@ -189,7 +189,7 @@ export default function CommentSection({ taskId, onCommentCount }) {
         <div className="divide-y divide-gray-100 mb-4">
           {comments.map((comment) => (
             <Comment
-              key={comment._id || comment.id}
+              key={comment.id}
               comment={comment}
               taskId={taskId}
               onReply={handleReply}

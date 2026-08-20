@@ -16,6 +16,7 @@ export default function TaskDetail() {
   const [currentPhoto, setCurrentPhoto] = useState(0)
   const [offer, setOffer] = useState({ amount: '', message: '', estimatedTime: '' })
   const [submitting, setSubmitting] = useState(false)
+  const [reporting, setReporting] = useState(false)
 
   const fetchTask = async () => {
     try {
@@ -29,6 +30,21 @@ export default function TaskDetail() {
   }
 
   useEffect(() => { fetchTask() }, [id])
+
+  const handleReport = async () => {
+    if (!user) { toast.error('Please login to report'); return }
+    const reason = prompt('Why are you reporting this task?')
+    if (!reason) return
+    try {
+      setReporting(true)
+      await axios.post('/api/reports', { type: 'task', targetId: task.id, reason })
+      toast.success('Report submitted')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to report')
+    } finally {
+      setReporting(false)
+    }
+  }
 
   const handleMakeOffer = async (e) => {
     e.preventDefault()
@@ -100,10 +116,10 @@ export default function TaskDetail() {
               </div>
 
               <div className="flex flex-wrap gap-4 mb-6 text-sm text-gray-500">
-                <span className="flex items-center gap-1">₹{task.budget?.min} - ₹{task.budget?.max}</span>
+                <span className="flex items-center gap-1">₹{task.budget_min || task.budget?.min} - ₹{task.budget_max || task.budget?.max}</span>
                 <span className="flex items-center gap-1"><MapPin size={16} /> {task.location?.city || task.location}</span>
-                {task.scheduledDate && <span className="flex items-center gap-1"><Calendar size={16} /> {format(new Date(task.scheduledDate), 'dd MMM yyyy')}</span>}
-                <span className="flex items-center gap-1"><Clock size={16} /> {task.createdAt ? formatDistanceToNow(new Date(task.createdAt), { addSuffix: true }) : ''}</span>
+                {task.scheduled_date && <span className="flex items-center gap-1"><Calendar size={16} /> {format(new Date(task.scheduled_date), 'dd MMM yyyy')}</span>}
+                <span className="flex items-center gap-1"><Clock size={16} /> {task.created_at ? formatDistanceToNow(new Date(task.created_at), { addSuffix: true }) : ''}</span>
               </div>
 
               <div className="prose max-w-none text-gray-600 whitespace-pre-line">{task.description}</div>
@@ -165,7 +181,7 @@ export default function TaskDetail() {
               )}
             </div>
 
-            <CommentSection taskId={task._id || task.id} />
+            <CommentSection taskId={task.id} />
           </div>
 
           <div className="space-y-6">
@@ -186,7 +202,7 @@ export default function TaskDetail() {
                     ))}
                     <span className="text-xs text-gray-400 ml-1">({task.poster?.totalReviews || task.poster?.total_reviews || 0})</span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">Member since {task.poster?.createdAt ? new Date(task.poster.createdAt).getFullYear() : '2024'}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Member since {task.poster?.created_at ? new Date(task.poster.created_at).getFullYear() : '2024'}</p>
                 </div>
               </Link>
               {user && user.id !== task.poster?.id && (
@@ -196,8 +212,8 @@ export default function TaskDetail() {
               )}
             </div>
 
-            <button className="w-full flex items-center justify-center gap-2 py-2.5 text-gray-400 hover:text-red-500 border border-gray-200 rounded-lg text-sm font-medium transition-all hover:border-red-200">
-              <Flag size={16} /> Report Task
+            <button onClick={handleReport} disabled={reporting} className="w-full flex items-center justify-center gap-2 py-2.5 text-gray-400 hover:text-red-500 border border-gray-200 rounded-lg text-sm font-medium transition-all hover:border-red-200 disabled:opacity-50">
+              <Flag size={16} /> {reporting ? 'Reporting...' : 'Report Task'}
             </button>
           </div>
         </div>

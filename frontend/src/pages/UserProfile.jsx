@@ -90,7 +90,7 @@ export default function UserProfile() {
                 )}
                 <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                   {profile.location && <span className="flex items-center gap-1"><MapPin size={14} /> {typeof profile.location === 'string' ? profile.location : `${profile.location.city || ''}${profile.location.city && profile.location.state ? ', ' : ''}${profile.location.state || ''}`}</span>}
-                  <span className="flex items-center gap-1"><Calendar size={14} /> Member since {profile.createdAt ? new Date(profile.createdAt).getFullYear() : '2024'}</span>
+                  <span className="flex items-center gap-1"><Calendar size={14} /> Member since {profile.created_at ? new Date(profile.created_at).getFullYear() : '2024'}</span>
                 </div>
                 <div className="flex items-center gap-1 mt-2">
                   {Array.from({ length: 5 }, (_, i) => (
@@ -107,9 +107,9 @@ export default function UserProfile() {
                 ) : (
                   <>
                     {currentUser && (
-                      <button className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2.5 px-5 rounded-lg transition-all text-sm shadow-sm">
+                      <Link to="/messages" className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2.5 px-5 rounded-lg transition-all text-sm shadow-sm">
                         <MessageSquare size={16} /> Contact
-                      </button>
+                      </Link>
                     )}
                     {currentUser && (
                       <button className="flex items-center gap-2 border border-gray-300 text-gray-600 hover:border-red-300 hover:text-red-500 font-medium py-2.5 px-4 rounded-lg transition-all text-sm">
@@ -126,7 +126,7 @@ export default function UserProfile() {
                 { label: 'Completed Tasks', value: profile.completedTasks || profile.completed_tasks || 0, icon: CheckCircle2 },
                 { label: 'Completion Rate', value: `${profile.completionRate || profile.completion_rate || 0}%`, icon: Award },
                 { label: 'Response Time', value: profile.responseTime || profile.response_time || '< 1hr', icon: Clock },
-                { label: 'Member Since', value: profile.createdAt ? new Date(profile.createdAt).getFullYear() : '2024', icon: Calendar },
+                { label: 'Member Since', value: profile.created_at ? new Date(profile.created_at).getFullYear() : '2024', icon: Calendar },
               ].map((stat) => (
                 <div key={stat.label} className="bg-gray-50 rounded-xl p-4 text-center">
                   <stat.icon size={20} className="mx-auto mb-1 text-primary-500" />
